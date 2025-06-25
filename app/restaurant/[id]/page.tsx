@@ -5,24 +5,26 @@ import { MenuSection } from "@/components/restaurant/menu-section"
 import { ReviewsSection } from "@/components/restaurant/reviews-section"
 
 interface RestaurantPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
-export default function RestaurantPage({ params }: RestaurantPageProps) {
+export default async function RestaurantPage({ params }: RestaurantPageProps) {
+  const { id } = await params
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        <RestaurantHeader restaurantId={params.id} />
+        <RestaurantHeader restaurantId={id} />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="lg:w-2/3">
-              <MenuSection restaurantId={params.id} />
+              <MenuSection restaurantId={id} />
             </div>
             <div className="lg:w-1/3">
-              <ReviewsSection restaurantId={params.id} />
+              <ReviewsSection restaurantId={id} />
             </div>
           </div>
         </div>

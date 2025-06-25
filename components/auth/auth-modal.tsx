@@ -81,7 +81,13 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     if (!validateRegister()) return
 
     try {
-      await register(registerData.name, registerData.email, registerData.password)
+      await register(
+        registerData.name, // username (using name as username, adjust if you have a username field)
+        registerData.name, // name
+        registerData.email,
+        registerData.phone,
+        registerData.password
+      )
       onOpenChange(false)
       toast({
         title: "Account created!",

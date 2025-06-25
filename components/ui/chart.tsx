@@ -102,21 +102,12 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
-const ChartTooltipContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-    React.ComponentProps<"div"> & {
-      hideLabel?: boolean
-      hideIndicator?: boolean
-      indicator?: "line" | "dot" | "dashed"
-      nameKey?: string
-      labelKey?: string
-    }
->(
+// ChartTooltipContent
+const ChartTooltipContent = React.forwardRef<HTMLDivElement, any>(
   (
     {
       active,
-      payload,
+      payload = [],
       className,
       indicator = "dot",
       hideLabel = false,
@@ -132,49 +123,34 @@ const ChartTooltipContent = React.forwardRef<
     ref
   ) => {
     const { config } = useChart()
-
+    const safePayload = Array.isArray(payload) ? payload : []
     const tooltipLabel = React.useMemo(() => {
-      if (hideLabel || !payload?.length) {
+      if (hideLabel || !safePayload.length) {
         return null
       }
-
-      const [item] = payload
+      const [item] = safePayload
       const key = `${labelKey || item.dataKey || item.name || "value"}`
       const itemConfig = getPayloadConfigFromPayload(config, item, key)
       const value =
         !labelKey && typeof label === "string"
           ? config[label as keyof typeof config]?.label || label
           : itemConfig?.label
-
       if (labelFormatter) {
         return (
           <div className={cn("font-medium", labelClassName)}>
-            {labelFormatter(value, payload)}
+            {labelFormatter(value, safePayload)}
           </div>
         )
       }
-
       if (!value) {
         return null
       }
-
       return <div className={cn("font-medium", labelClassName)}>{value}</div>
-    }, [
-      label,
-      labelFormatter,
-      payload,
-      hideLabel,
-      labelClassName,
-      config,
-      labelKey,
-    ])
-
-    if (!active || !payload?.length) {
+    }, [label, labelFormatter, safePayload, hideLabel, labelClassName, config, labelKey])
+    if (!active || !safePayload.length) {
       return null
     }
-
-    const nestLabel = payload.length === 1 && indicator !== "dot"
-
+    const nestLabel = safePayload.length === 1 && indicator !== "dot"
     return (
       <div
         ref={ref}
@@ -185,11 +161,10 @@ const ChartTooltipContent = React.forwardRef<
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
-          {payload.map((item, index) => {
+          {safePayload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color || item.payload.fill || item.color
-
+            const indicatorColor = color || item.payload?.fill || item.color
             return (
               <div
                 key={item.dataKey}
@@ -258,24 +233,17 @@ ChartTooltipContent.displayName = "ChartTooltip"
 
 const ChartLegend = RechartsPrimitive.Legend
 
-const ChartLegendContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-      hideIcon?: boolean
-      nameKey?: string
-    }
->(
+// ChartLegendContent
+const ChartLegendContent = React.forwardRef<HTMLDivElement, any>(
   (
-    { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
+    { className, hideIcon = false, payload = [], verticalAlign = "bottom", nameKey },
     ref
   ) => {
     const { config } = useChart()
-
-    if (!payload?.length) {
+    const safePayload = Array.isArray(payload) ? payload : []
+    if (!safePayload.length) {
       return null
     }
-
     return (
       <div
         ref={ref}
@@ -285,10 +253,9 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map((item) => {
+        {safePayload.map((item) => {
           const key = `${nameKey || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
-
           return (
             <div
               key={item.value}

@@ -38,8 +38,10 @@ export default function RestaurantsPage() {
         search: filters.search,
         cuisine: filters.cuisines.join(","),
         minRating: filters.minRating > 0 ? filters.minRating : undefined,
-      })
-      setRestaurants(response.restaurants)
+      }) as unknown
+      if (response && typeof response === 'object' && 'restaurants' in response) {
+        setRestaurants((response as { restaurants: Restaurant[] }).restaurants)
+      }
     } catch (error) {
       console.error("Failed to fetch restaurants:", error)
     } finally {

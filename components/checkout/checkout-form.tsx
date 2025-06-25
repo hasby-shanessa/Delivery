@@ -97,14 +97,20 @@ export function CheckoutForm() {
       }
 
       const response = await apiClient.createOrder(orderData)
-
-      if (response.success) {
+      if (
+        response &&
+        typeof response === 'object' &&
+        'success' in response &&
+        (response as any).success &&
+        'order' in response &&
+        typeof (response as any).order === 'object'
+      ) {
         clearCart()
         toast({
           title: "Order placed successfully!",
-          description: `Your order #${response.order.orderNumber} has been confirmed.`,
+          description: `Your order #${(response as any).order.orderNumber} has been confirmed.`,
         })
-        router.push(`/order-tracking/${response.order.id}`)
+        router.push(`/order-tracking/${(response as any).order.id}`)
       }
     } catch (error) {
       console.error("Order submission error:", error)

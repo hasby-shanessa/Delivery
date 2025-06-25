@@ -2,16 +2,16 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { Toaster } from "@/components/ui/toaster"
-import { CartProvider } from "@/contexts/cart-context"
 import { AuthProvider } from "@/contexts/auth-context"
+import { CartProvider } from "@/contexts/cart-context"
+import { Toaster } from "@/components/ui/toaster"
+import { StatusIndicator } from "@/components/debug/status-indicator"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "FoodieExpress - Food Delivery App",
-  description: "Order food from your favorite restaurants",
-    generator: 'v0.dev'
+  title: "Foodie - Multi Restaurant Delivery",
+  description: "Order from your favorite restaurants",
 }
 
 export default function RootLayout({
@@ -26,6 +26,7 @@ export default function RootLayout({
           <CartProvider>
             {children}
             <Toaster />
+            <StatusIndicator />
           </CartProvider>
         </AuthProvider>
       </body>

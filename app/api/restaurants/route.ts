@@ -1,173 +1,135 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { createServerClient, canUseSupabase } from "@/lib/supabase"
 
-// Mock data - replace with actual database queries
-const restaurants = [
+// Mock data for when Supabase is not available
+const MOCK_RESTAURANTS = [
   {
-    id: 1,
-    name: "Bella Italia",
-    slug: "bella-italia",
-    cuisine: "Italian",
-    rating: 4.8,
-    reviewCount: 324,
-    deliveryTime: "25-35 min",
-    deliveryFee: 2.99,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: true,
-    isOpen: true,
-    minimumOrder: 15.0,
-  },
-  {
-    id: 2,
-    name: "Sushi Master",
-    slug: "sushi-master",
-    cuisine: "Japanese",
-    rating: 4.9,
-    reviewCount: 567,
-    deliveryTime: "30-40 min",
-    deliveryFee: 3.99,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: true,
-    isOpen: true,
-    minimumOrder: 20.0,
-  },
-  {
-    id: 3,
-    name: "Burger Palace",
-    slug: "burger-palace",
-    cuisine: "American",
-    rating: 4.6,
-    reviewCount: 892,
-    deliveryTime: "20-30 min",
-    deliveryFee: 1.99,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
-    isOpen: true,
-    minimumOrder: 10.0,
-  },
-  {
-    id: 4,
-    name: "Spice Garden",
-    slug: "spice-garden",
-    cuisine: "Indian",
-    rating: 4.7,
-    reviewCount: 445,
-    deliveryTime: "35-45 min",
-    deliveryFee: 2.49,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: true,
-    isOpen: false,
-    minimumOrder: 12.0,
-  },
-  {
-    id: 5,
-    name: "Dragon Palace",
-    slug: "dragon-palace",
-    cuisine: "Chinese",
+    id: "1",
+    name: "Pizza Palace",
+    cuisine_type: "Italian",
+    description: "Authentic Italian pizza and pasta",
+    image_url: "/placeholder.svg?height=200&width=300",
     rating: 4.5,
-    reviewCount: 678,
-    deliveryTime: "25-35 min",
-    deliveryFee: 2.99,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
-    isOpen: true,
-    minimumOrder: 15.0,
+    delivery_time: "25-35 min",
+    delivery_fee: 2.99,
+    minimum_order: 15.0,
+    is_featured: true,
+    address: "123 Main St, City",
+    phone: "+1234567890",
+    hours: { open: "11:00", close: "23:00" },
   },
   {
-    id: 6,
-    name: "Taco Fiesta",
-    slug: "taco-fiesta",
-    cuisine: "Mexican",
-    rating: 4.4,
-    reviewCount: 234,
-    deliveryTime: "20-30 min",
-    deliveryFee: 1.49,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
-    isOpen: true,
-    minimumOrder: 8.0,
-  },
-  {
-    id: 7,
-    name: "Mediterranean Delight",
-    slug: "mediterranean-delight",
-    cuisine: "Mediterranean",
-    rating: 4.6,
-    reviewCount: 156,
-    deliveryTime: "30-40 min",
-    deliveryFee: 2.99,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
-    isOpen: true,
-    minimumOrder: 18.0,
-  },
-  {
-    id: 8,
-    name: "Thai Orchid",
-    slug: "thai-orchid",
-    cuisine: "Thai",
-    rating: 4.7,
-    reviewCount: 389,
-    deliveryTime: "25-35 min",
-    deliveryFee: 2.49,
-    image: "/placeholder.svg?height=200&width=300",
-    featured: false,
-    isOpen: true,
-    minimumOrder: 14.0,
+    id: "2",
+    name: "Burger Barn",
+    cuisine_type: "American",
+    description: "Juicy burgers and crispy fries",
+    image_url: "/placeholder.svg?height=200&width=300",
+    rating: 4.2,
+    delivery_time: "20-30 min",
+    delivery_fee: 1.99,
+    minimum_order: 12.0,
+    is_featured: true,
+    address: "456 Oak Ave, City",
+    phone: "+1234567891",
+    hours: { open: "10:00", close: "22:00" },
   },
 ]
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const cuisine = searchParams.get("cuisine")
-  const search = searchParams.get("search")
-  const minRating = searchParams.get("minRating")
-  const featured = searchParams.get("featured")
-  const isOpen = searchParams.get("isOpen")
-  const page = Number.parseInt(searchParams.get("page") || "1")
-  const limit = Number.parseInt(searchParams.get("limit") || "10")
+  try {
+    if (!canUseSupabase()) {
+      console.log("Using mock restaurants data")
+      return NextResponse.json({ restaurants: MOCK_RESTAURANTS, total: MOCK_RESTAURANTS.length })
+    }
 
-  let filteredRestaurants = restaurants
+    const supabase = createServerClient()
+    if (!supabase) {
+      return NextResponse.json({ restaurants: MOCK_RESTAURANTS, total: MOCK_RESTAURANTS.length })
+    }
 
-  // Filter by search query
-  if (search) {
-    const searchLower = search.toLowerCase()
-    filteredRestaurants = filteredRestaurants.filter(
-      (r) => r.name.toLowerCase().includes(searchLower) || r.cuisine.toLowerCase().includes(searchLower),
-    )
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get("search")
+    const cuisine = searchParams.get("cuisine")
+    const minRating = searchParams.get("minRating")
+    const featured = searchParams.get("featured")
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const limit = Number.parseInt(searchParams.get("limit") || "10")
+
+    let query = supabase.from("restaurants").select("*", { count: "exact" })
+
+    // Apply filters
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,cuisine_type.ilike.%${search}%`)
+    }
+
+    if (cuisine) {
+      const cuisines = cuisine.split(",").map((c) => c.trim())
+      query = query.in("cuisine_type", cuisines)
+    }
+
+    if (minRating) {
+      query = query.gte("rating", Number.parseFloat(minRating))
+    }
+
+    if (featured === "true") {
+      query = query.eq("is_featured", true)
+    }
+
+    // Apply pagination
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    query = query.range(from, to)
+
+    const { data: restaurants, error, count } = await query
+
+    if (error) {
+      console.error("Database error:", error)
+      return NextResponse.json({ restaurants: MOCK_RESTAURANTS, total: MOCK_RESTAURANTS.length })
+    }
+
+    return NextResponse.json({
+      restaurants: restaurants || [],
+      total: count || 0,
+      page,
+      limit,
+    })
+  } catch (error) {
+    console.error("API error:", error)
+    return NextResponse.json({ restaurants: MOCK_RESTAURANTS, total: MOCK_RESTAURANTS.length })
   }
+}
 
-  // Filter by cuisine (can be comma-separated)
-  if (cuisine) {
-    const cuisines = cuisine.split(",").map((c) => c.trim().toLowerCase())
-    filteredRestaurants = filteredRestaurants.filter((r) => cuisines.includes(r.cuisine.toLowerCase()))
+export async function POST(request: NextRequest) {
+  try {
+    if (!canUseSupabase()) {
+      const body = await request.json()
+      const newRestaurant = {
+        id: Date.now().toString(),
+        ...body,
+        rating: 0,
+        review_count: 0,
+        created_at: new Date().toISOString(),
+      }
+      return NextResponse.json({ restaurant: newRestaurant })
+    }
+
+    const supabase = createServerClient()
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not available" }, { status: 500 })
+    }
+
+    const body = await request.json()
+
+    const { data: restaurant, error } = await supabase.from("restaurants").insert([body]).select().single()
+
+    if (error) {
+      console.error("Database error:", error)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    return NextResponse.json({ restaurant })
+  } catch (error) {
+    console.error("API error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-
-  // Filter by minimum rating
-  if (minRating) {
-    const rating = Number.parseFloat(minRating)
-    filteredRestaurants = filteredRestaurants.filter((r) => r.rating >= rating)
-  }
-
-  // Filter by featured status
-  if (featured === "true") {
-    filteredRestaurants = filteredRestaurants.filter((r) => r.featured)
-  }
-
-  // Filter by open status
-  if (isOpen === "true") {
-    filteredRestaurants = filteredRestaurants.filter((r) => r.isOpen)
-  }
-
-  // Pagination
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedRestaurants = filteredRestaurants.slice(startIndex, endIndex)
-
-  return NextResponse.json({
-    restaurants: paginatedRestaurants,
-    total: filteredRestaurants.length,
-    page,
-    limit,
-    totalPages: Math.ceil(filteredRestaurants.length / limit),
-  })
 }

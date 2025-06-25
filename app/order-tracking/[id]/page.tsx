@@ -11,9 +11,9 @@ import { CheckCircle, Clock, Truck, MapPin, Phone, Star } from "lucide-react"
 import Image from "next/image"
 
 interface OrderTrackingPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 const orderStatuses = [
@@ -24,9 +24,16 @@ const orderStatuses = [
   { key: "delivered", label: "Delivered", icon: CheckCircle, completed: false },
 ]
 
-export default function OrderTrackingPage({ params }: OrderTrackingPageProps) {
+export default async function OrderTrackingPage({ params }: OrderTrackingPageProps) {
+  const { id } = await params
+
+  // This will be a client component for the interactive parts
+  return <OrderTrackingClient orderId={id} />
+}
+
+function OrderTrackingClient({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState({
-    id: params.id,
+    id: orderId,
     orderNumber: "ORD-1234567890",
     status: "ready",
     restaurant: {
