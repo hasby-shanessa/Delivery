@@ -1,6 +1,7 @@
 -- Users table
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id VARCHAR(64) PRIMARY KEY, -- changed from SERIAL to VARCHAR for string ids
+    username VARCHAR(100) UNIQUE NOT NULL, -- added username
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
@@ -8,6 +9,7 @@ CREATE TABLE users (
     phone VARCHAR(20),
     avatar_url VARCHAR(500),
     email_verified BOOLEAN DEFAULT FALSE,
+    role VARCHAR(20) DEFAULT 'user', -- added role
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

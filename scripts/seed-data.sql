@@ -1,8 +1,10 @@
 -- Insert sample users
-INSERT INTO users (email, password_hash, first_name, last_name, phone, email_verified) VALUES
-('john.doe@example.com', '$2b$10$example_hash_1', 'John', 'Doe', '+1234567890', true),
-('jane.smith@example.com', '$2b$10$example_hash_2', 'Jane', 'Smith', '+1234567891', true),
-('mike.johnson@example.com', '$2b$10$example_hash_3', 'Mike', 'Johnson', '+1234567892', true);
+INSERT INTO users (id, username, email, password_hash, first_name, last_name, phone, email_verified, role) VALUES
+('1', 'john_doe', 'john.doe@example.com', '$2b$10$example_hash_1', 'John', 'Doe', '+1234567890', true, 'user'),
+('2', 'jane_smith', 'jane.smith@example.com', '$2b$10$example_hash_2', 'Jane', 'Smith', '+1234567891', true, 'user'),
+('3', 'mike_johnson', 'mike.johnson@example.com', '$2b$10$example_hash_3', 'Mike', 'Johnson', '+1234567892', true, 'user'),
+('admin', 'admin', 'admin@foodie.com', '$2b$10$admin_hash', 'Admin', 'User', '+1234567899', true, 'admin'),
+('admin2', 'admin2', 'admin@gmail.com', '$2b$10$admin2_hash', 'Admin', 'User', '+1234567898', true, 'admin');
 
 -- Insert sample restaurants
 INSERT INTO restaurants (name, slug, description, cuisine_type, phone, email, image_url, rating, review_count, delivery_fee, minimum_order, delivery_time_min, delivery_time_max, is_featured) VALUES
